@@ -1,7 +1,6 @@
 package com.dicoding.picodiploma.mycamera
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
@@ -93,10 +92,11 @@ class ImageClassifierHelper(
             .add(ResizeOp(224, 224, ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
             .add(CastOp(DataType.UINT8))
             .build()
-        val tensorImage = imageProcessor.process(TensorImage.fromBitmap(toBitmap(image)))
+        val tensorImage = imageProcessor.process(TensorImage.fromBitmap(image.toBitmap()))
         val imageProgressionOptions = ImageProcessingOptions.builder()
             .setOrientation(getOrientationFromRotation(image.imageInfo.rotationDegrees))
             .build()
+        image.close()
 
         var inferenceTime = SystemClock.uptimeMillis()
         val results = imageClassifier?.classify(tensorImage, imageProgressionOptions)
@@ -114,17 +114,6 @@ class ImageClassifierHelper(
             Surface.ROTATION_90 -> ImageProcessingOptions.Orientation.TOP_LEFT
             else -> ImageProcessingOptions.Orientation.RIGHT_TOP
         }
-    }
-
-    private fun toBitmap(image: ImageProxy): Bitmap {
-        val bitmapBuffer = Bitmap.createBitmap(
-            image.width,
-            image.height,
-            Bitmap.Config.ARGB_8888
-        )
-        image.use { bitmapBuffer.copyPixelsFromBuffer(image.planes[0].buffer) }
-        image.close()
-        return bitmapBuffer
     }
 
     companion object {
